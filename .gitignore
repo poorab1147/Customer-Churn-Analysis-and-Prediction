@@ -24,3 +24,8 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite3
+mlartifacts/
+mlflow.db
+churn_model/
+venv/
+__pycache__/

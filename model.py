@@ -1,4 +1,6 @@
 import pandas as pd
+import mlflow
+import mlflow.sklearn
 from sqlalchemy import create_engine
 
 from sklearn.model_selection import train_test_split
@@ -24,7 +26,7 @@ from sklearn.metrics import (
 # ============================================================
 
 DB_USER = "postgres"
-DB_PASSWORD = "YOUR_POSTGRES_PASSWORD"
+DB_PASSWORD = "iamblessed"
 DB_HOST = "localhost"
 DB_PORT = "5432"
 DB_NAME = "customer_churn"
@@ -355,7 +357,79 @@ print(
 
 
 # ============================================================
-# 11. MODEL COMPARISON
+# 11. MLFLOW EXPERIMENT TRACKING
+# ============================================================
+
+# The MLflow tracking server must be running at this address.
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+mlflow.set_experiment("Customer-Churn-Prediction")
+
+# Track Logistic Regression.
+with mlflow.start_run(run_name="Logistic-Regression"):
+    mlflow.log_params({
+        "model_type": "Logistic Regression",
+        "test_size": 0.20,
+        "random_state": 42,
+        "max_iter": 1000,
+        "threshold": 0.50,
+    })
+
+    mlflow.log_metrics({
+        "accuracy": float(logistic_accuracy),
+        "precision": float(logistic_precision),
+        "recall": float(logistic_recall),
+        "f1_score": float(logistic_f1),
+        "roc_auc": float(logistic_roc_auc),
+    })
+
+    mlflow.log_text(
+        str(logistic_cm),
+        "evaluation/logistic_confusion_matrix.txt",
+    )
+
+    mlflow.sklearn.log_model(
+        sk_model=logistic_model,
+        name="logistic_regression_pipeline",
+    )
+
+    print("Logistic Regression logged to MLflow.")
+
+# Track Random Forest.
+with mlflow.start_run(run_name="Random-Forest"):
+    mlflow.log_params({
+        "model_type": "Random Forest",
+        "test_size": 0.20,
+        "random_state": 42,
+        "n_estimators": 200,
+        "threshold": 0.50,
+    })
+
+    mlflow.log_metrics({
+        "accuracy": float(rf_accuracy),
+        "precision": float(rf_precision),
+        "recall": float(rf_recall),
+        "f1_score": float(rf_f1),
+        "roc_auc": float(rf_roc_auc),
+    })
+
+    mlflow.log_text(
+        str(rf_cm),
+        "evaluation/random_forest_confusion_matrix.txt",
+    )
+
+    mlflow.sklearn.log_model(
+        sk_model=random_forest_model,
+        name="random_forest_pipeline",
+        skops_trusted_types=["sklearn.tree._tree.Tree"],
+   )
+
+    print("Random Forest logged to MLflow.")
+
+print("Both model runs have been recorded in MLflow.")
+
+
+# ============================================================
+# 12. MODEL COMPARISON
 # ============================================================
 
 comparison = pd.DataFrame({
